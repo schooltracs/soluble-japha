@@ -99,7 +99,7 @@ class JavaException extends Exception implements JavaType
         return ['__delegate'];
     }
 
-    public function __wakeup()
+    public function __wakeup(): void
     {
         $this->__delegate->__wakeup();
         $this->__java = $this->__delegate->__java;
