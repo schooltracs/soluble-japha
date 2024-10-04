@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types = 1);
 /**
  * soluble-japha / PHPJavaBridge driver client.
  *
@@ -44,53 +44,56 @@ use Soluble\Japha\Interfaces\JavaObject;
 
 class ObjectIterator implements Iterator
 {
-    /**
-     * @var array
-     */
-    private $var;
+  /**
+   * @var array
+   */
+  private $var;
 
-    /**
-     * @param JavaObject|JavaType $javaObject
-     */
-    public function __construct($javaObject)
-    {
-        $this->var = Pjb62Driver::castPjbInternal($javaObject, 'A');
-    }
+  /**
+   * @param JavaObject|JavaType $javaObject
+   */
+  public function __construct($javaObject)
+  {
+    $this->var = Pjb62Driver::castPjbInternal($javaObject, 'A');
+  }
 
-    public function rewind(): void
-    {
-        reset($this->var);
-    }
+  public function rewind(): void
+  {
+    reset($this->var);
+  }
 
-    /**
-     * @return bool
-     */
-    public function valid(): bool
-    {
-        return $this->current() !== false;
-    }
+  /**
+   * @return bool
+   */
+  public function valid(): bool
+  {
+    return $this->current() !== false;
+  }
 
-    /**
-     * @return mixed
-     */
-    public function next()
-    {
-        return next($this->var);
-    }
+  /**
+   * @return mixed
+   */
+  #[\ReturnTypeWillChange]
+  public function next()
+  {
+    return next($this->var);
+  }
 
-    /**
-     * @return int|string
-     */
-    public function key()
-    {
-        return key($this->var);
-    }
+  /**
+   * @return int|string
+   */
+  #[\ReturnTypeWillChange]
+  public function key()
+  {
+    return key($this->var);
+  }
 
-    /**
-     * @return mixed
-     */
-    public function current()
-    {
-        return current($this->var);
-    }
+  /**
+   * @return mixed
+   */
+  #[\ReturnTypeWillChange]
+  public function current()
+  {
+    return current($this->var);
+  }
 }
