@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types = 1);
 
 /**
  * soluble-japha / PHPJavaBridge driver client.
@@ -45,218 +45,218 @@ use Soluble\Japha\Bridge\Socket\StreamSocket;
 
 class SimpleHttpHandler extends SocketHandler
 {
-    public $headers;
+  public $headers;
 
-    /**
-     * @var array
-     */
-    public $cookies;
+  /**
+   * @var array
+   */
+  public $cookies;
 
-    /**
-     * @var string
-     */
-    public $context;
+  /**
+   * @var string
+   */
+  public $context;
 
-    /**
-     * @var string
-     */
-    public $ssl;
+  /**
+   * @var string
+   */
+  public $ssl;
 
-    /**
-     * @var int
-     */
-    public $port;
+  /**
+   * @var int
+   */
+  public $port;
 
-    /**
-     * @var string
-     */
-    public $host;
+  /**
+   * @var string
+   */
+  public $host;
 
-    /**
-     * @var array
-     */
-    protected $cachedValues = [];
+  /**
+   * @var array
+   */
+  protected $cachedValues = [];
 
-    /**
-     * @var string
-     */
-    protected $java_servlet;
+  /**
+   * @var string
+   */
+  protected $java_servlet;
 
-    /**
-     * @var int
-     */
-    protected $java_recv_size;
+  /**
+   * @var int
+   */
+  protected $java_recv_size;
 
-    /**
-     * @var int
-     */
-    protected $java_send_size;
+  /**
+   * @var int
+   */
+  protected $java_send_size;
 
-    /**
-     * @throws Exception\IllegalStateException on channel creation error
-     *
-     * @param Protocol $protocol
-     * @param string   $ssl
-     * @param string   $host
-     * @param int      $port
-     * @param string   $java_servlet
-     * @param int      $java_recv_size
-     * @param int      $java_send_size
-     */
-    public function __construct(Protocol $protocol, $ssl, $host, $port, $java_servlet, $java_recv_size, $java_send_size)
-    {
-        $this->cookies = [];
-        $this->protocol = $protocol;
-        $this->ssl = $ssl;
-        $this->host = $host;
-        $this->port = $port;
-        $this->java_servlet = $java_servlet;
+  /**
+   * @throws Exception\IllegalStateException on channel creation error
+   *
+   * @param Protocol $protocol
+   * @param string   $ssl
+   * @param string   $host
+   * @param int      $port
+   * @param string   $java_servlet
+   * @param int      $java_recv_size
+   * @param int      $java_send_size
+   */
+  public function __construct(Protocol $protocol, $ssl, $host, $port, $java_servlet, $java_recv_size, $java_send_size)
+  {
+    $this->cookies = [];
+    $this->protocol = $protocol;
+    $this->ssl = $ssl;
+    $this->host = $host;
+    $this->port = $port;
+    $this->java_servlet = $java_servlet;
 
-        $this->java_send_size = $java_send_size;
-        $this->java_recv_size = $java_recv_size;
+    $this->java_send_size = $java_send_size;
+    $this->java_recv_size = $java_recv_size;
 
-        $this->cachedValues = [
-            'getContext' => null
-        ];
-        $this->createChannel();
+    $this->cachedValues = [
+      'getContext' => null,
+    ];
+    $this->createChannel();
+  }
+
+  /**
+   * @throws Exception\IllegalStateException     on channel creation error
+   * @throws Exception\BrokenConnectionException if all goes wrong
+   */
+  protected function createChannel()
+  {
+    $channelName = Pjb62Driver::getJavaBridgeHeader('X_JAVABRIDGE_REDIRECT', $_SERVER);
+    $context = Pjb62Driver::getJavaBridgeHeader('X_JAVABRIDGE_CONTEXT', $_SERVER);
+    $len = strlen($context);
+    $len0 = PjbProxyClient::getInstance()->getCompatibilityOption($this->protocol->client);
+    $len1 = chr($len & 0xFF);
+    $len >>= 8;
+    $len2 = chr($len & 0xFF);
+    $this->channel = $this->getChannel($channelName);
+    $this->protocol->setSocketHandler(new SocketHandler($this->protocol, $this->channel));
+    $this->protocol->write("\177{$len0}{$len1}{$len2}{$context}");
+    $this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
+    $this->protocol->handler = $this->protocol->getSocketHandler();
+
+    if ($this->protocol->client->sendBuffer !== null) {
+      $ret = $this->protocol->handler->write($this->protocol->client->sendBuffer);
+      if ($ret === null) {
+        $this->protocol->handler->shutdownBrokenConnection('Broken local connection handle');
+      }
+      $this->protocol->client->sendBuffer = null;
+      $this->protocol->handler->read(1);
+    }
+  }
+
+  public function getContextFromCgiEnvironment(): string
+  {
+    return Pjb62Driver::getJavaBridgeHeader('X_JAVABRIDGE_CONTEXT', $_SERVER);
+  }
+
+  /**
+   * @return string
+   */
+  public function getContext()
+  {
+    if (!array_key_exists('getContext', $this->cachedValues)) {
+      $ctx = $this->getContextFromCgiEnvironment();
+      if ($ctx) {
+        $this->cachedValues['getContext'] = sprintf('X_JAVABRIDGE_CONTEXT: %s', $ctx);
+      }
     }
 
-    /**
-     * @throws Exception\IllegalStateException     on channel creation error
-     * @throws Exception\BrokenConnectionException if all goes wrong
-     */
-    protected function createChannel()
-    {
-        $channelName = Pjb62Driver::getJavaBridgeHeader('X_JAVABRIDGE_REDIRECT', $_SERVER);
-        $context = Pjb62Driver::getJavaBridgeHeader('X_JAVABRIDGE_CONTEXT', $_SERVER);
-        $len = strlen($context);
-        $len0 = PjbProxyClient::getInstance()->getCompatibilityOption($this->protocol->client);
-        $len1 = chr($len & 0xFF);
-        $len >>= 8;
-        $len2 = chr($len & 0xFF);
-        $this->channel = $this->getChannel($channelName);
-        $this->protocol->setSocketHandler(new SocketHandler($this->protocol, $this->channel));
-        $this->protocol->write("\177${len0}${len1}${len2}${context}");
-        $this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
-        $this->protocol->handler = $this->protocol->getSocketHandler();
+    return $this->cachedValues['getContext'];
+  }
 
-        if ($this->protocol->client->sendBuffer !== null) {
-            $ret = $this->protocol->handler->write($this->protocol->client->sendBuffer);
-            if ($ret === null) {
-                $this->protocol->handler->shutdownBrokenConnection('Broken local connection handle');
-            }
-            $this->protocol->client->sendBuffer = null;
-            $this->protocol->handler->read(1);
-        }
+  public function getWebAppInternal()
+  {
+    $context = $this->protocol->webContext;
+    if (isset($context)) {
+      return $context;
     }
 
-    public function getContextFromCgiEnvironment(): string
-    {
-        return Pjb62Driver::getJavaBridgeHeader('X_JAVABRIDGE_CONTEXT', $_SERVER);
+    return ($this->java_servlet == 'User' &&
+      array_key_exists('PHP_SELF', $_SERVER) &&
+      array_key_exists('HTTP_HOST', $_SERVER)) ? $_SERVER['PHP_SELF'] . 'javabridge' : null;
+  }
+
+  public function getWebApp(): string
+  {
+    $context = $this->getWebAppInternal();
+    if (null === $context) {
+      $context = $this->java_servlet;
     }
 
-    /**
-     * @return string
-     */
-    public function getContext()
-    {
-        if (!array_key_exists('getContext', $this->cachedValues)) {
-            $ctx = $this->getContextFromCgiEnvironment();
-            if ($ctx) {
-                $this->cachedValues['getContext'] = sprintf('X_JAVABRIDGE_CONTEXT: %s', $ctx);
-            }
-        }
+    return $context;
+  }
 
-        return $this->cachedValues['getContext'];
+  /**
+   * @throws Exception\BrokenConnectionException
+   */
+  public function write(string $data): ?int
+  {
+    return $this->protocol->getSocketHandler()->write($data);
+  }
+
+  public function doSetCookie($key, $val, $path)
+  {
+    $path = trim($path);
+    $webapp = $this->getWebAppInternal();
+    if (!$webapp) {
+      $path = '/';
     }
+    setcookie($key, $val, 0, $path);
+  }
 
-    public function getWebAppInternal()
-    {
-        $context = $this->protocol->webContext;
-        if (isset($context)) {
-            return $context;
-        }
+  /**
+   * @throws Exception\BrokenConnectionException
+   */
+  public function read(int $size): string
+  {
+    return $this->protocol->getSocketHandler()->read($size);
+  }
 
-        return ($this->java_servlet == 'User' &&
-                array_key_exists('PHP_SELF', $_SERVER) &&
-                array_key_exists('HTTP_HOST', $_SERVER)) ? $_SERVER['PHP_SELF'].'javabridge' : null;
+  /**
+   * @param string $channelName generally the tcp port on which to connect
+   *
+   * @return SocketChannelP
+   *
+   * @throws Exception\ConnectException
+   */
+  public function getChannel(string $channelName): SocketChannelP
+  {
+    $persistent = $this->protocol->client->getParam(Client::PARAM_USE_PERSISTENT_CONNECTION);
+    try {
+      $streamSocket = new StreamSocket(
+        $this->ssl === 'ssl://' ? StreamSocket::TRANSPORT_SSL : StreamSocket::TRANSPORT_TCP,
+        $this->host . ':' . $channelName,
+        null,
+        [],
+        $persistent
+      );
+      $socket = $streamSocket->getSocket();
+    } catch (\Throwable $e) {
+      $logger = $this->protocol->getClient()->getLogger();
+      $logger->critical(sprintf(
+        '[soluble-japha] %s (%s)',
+        $e->getMessage(),
+        __METHOD__
+      ));
+      throw new ConnectionException($e->getMessage(), $e->getCode());
     }
+    stream_set_timeout($socket, -1);
 
-    public function getWebApp(): string
-    {
-        $context = $this->getWebAppInternal();
-        if (null === $context) {
-            $context = $this->java_servlet;
-        }
+    return new SocketChannelP($socket, $this->host, $this->java_recv_size, $this->java_send_size);
+  }
 
-        return $context;
-    }
+  public function keepAlive(): void
+  {
+    parent::keepAlive();
+  }
 
-    /**
-     * @throws Exception\BrokenConnectionException
-     */
-    public function write(string $data): ?int
-    {
-        return $this->protocol->getSocketHandler()->write($data);
-    }
-
-    public function doSetCookie($key, $val, $path)
-    {
-        $path = trim($path);
-        $webapp = $this->getWebAppInternal();
-        if (!$webapp) {
-            $path = '/';
-        }
-        setcookie($key, $val, 0, $path);
-    }
-
-    /**
-     * @throws Exception\BrokenConnectionException
-     */
-    public function read(int $size): string
-    {
-        return $this->protocol->getSocketHandler()->read($size);
-    }
-
-    /**
-     * @param string $channelName generally the tcp port on which to connect
-     *
-     * @return SocketChannelP
-     *
-     * @throws Exception\ConnectException
-     */
-    public function getChannel(string $channelName): SocketChannelP
-    {
-        $persistent = $this->protocol->client->getParam(Client::PARAM_USE_PERSISTENT_CONNECTION);
-        try {
-            $streamSocket = new StreamSocket(
-                $this->ssl === 'ssl://' ? StreamSocket::TRANSPORT_SSL : StreamSocket::TRANSPORT_TCP,
-                $this->host.':'.$channelName,
-                null,
-                [],
-                $persistent
-            );
-            $socket = $streamSocket->getSocket();
-        } catch (\Throwable $e) {
-            $logger = $this->protocol->getClient()->getLogger();
-            $logger->critical(sprintf(
-                '[soluble-japha] %s (%s)',
-                $e->getMessage(),
-                __METHOD__
-            ));
-            throw new ConnectionException($e->getMessage(), $e->getCode());
-        }
-        stream_set_timeout($socket, -1);
-
-        return new SocketChannelP($socket, $this->host, $this->java_recv_size, $this->java_send_size);
-    }
-
-    public function keepAlive(): void
-    {
-        parent::keepAlive();
-    }
-
-    public function redirect(): void
-    {
-    }
+  public function redirect(): void
+  {
+  }
 }

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types = 1);
 /**
  * soluble-japha / PHPJavaBridge driver client.
  *
@@ -44,54 +44,54 @@ use Soluble\Japha\Bridge\Exception;
 
 class ChunkedSocketChannel extends SocketChannel
 {
-    /**
-     * @throws Exception\RuntimeException
-     *
-     * @param string $data
-     */
-    public function fwrite(string $data): int
-    {
-        $len = dechex(strlen($data));
-        $written = fwrite($this->peer, "${len}\r\n${data}\r\n");
-        if (!$written) {
-            $msg = 'Cannot write to socket';
-            throw new Exception\RuntimeException($msg);
-        }
-
-        return $written;
+  /**
+   * @throws Exception\RuntimeException
+   *
+   * @param string $data
+   */
+  public function fwrite(string $data): int
+  {
+    $len = dechex(strlen($data));
+    $written = fwrite($this->peer, "{$len}\r\n{$data}\r\n");
+    if (!$written) {
+      $msg = 'Cannot write to socket';
+      throw new Exception\RuntimeException($msg);
     }
 
-    /**
-     * @throws BrokenConnectionException
-     */
-    public function fread(int $size): ?string
-    {
-        $line = fgets($this->peer, $this->recv_size);
-        if ($line === false) {
-            throw new BrokenConnectionException(
-                'Cannot read from socket'
-            );
-        }
+    return $written;
+  }
 
-        $length = (int) hexdec($line);
-        $data = '';
-        while ($length > 0) {
-            $str = fread($this->peer, $length);
-            if (feof($this->peer) || $str === false) {
-                return null;
-            }
-            $length -= strlen($str);
-            $data .= $str;
-        }
-        fgets($this->peer, 3);
-
-        return $data;
+  /**
+   * @throws BrokenConnectionException
+   */
+  public function fread(int $size): ?string
+  {
+    $line = fgets($this->peer, $this->recv_size);
+    if ($line === false) {
+      throw new BrokenConnectionException(
+        'Cannot read from socket'
+      );
     }
 
-    public function keepAlive(): void
-    {
-        $this->keepAliveSC();
-        $this->checkE();
-        fclose($this->peer);
+    $length = (int) hexdec($line);
+    $data = '';
+    while ($length > 0) {
+      $str = fread($this->peer, $length);
+      if (feof($this->peer) || $str === false) {
+        return null;
+      }
+      $length -= strlen($str);
+      $data .= $str;
     }
+    fgets($this->peer, 3);
+
+    return $data;
+  }
+
+  public function keepAlive(): void
+  {
+    $this->keepAliveSC();
+    $this->checkE();
+    fclose($this->peer);
+  }
 }
