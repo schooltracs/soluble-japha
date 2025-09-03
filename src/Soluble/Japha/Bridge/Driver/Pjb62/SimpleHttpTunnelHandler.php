@@ -159,7 +159,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
     public function fwrite(string $data): ?int
     {
         $len = dechex(strlen($data));
-        $written = fwrite($this->socket, "${len}\r\n${data}\r\n");
+        $written = fwrite($this->socket, "{$len}\r\n{$data}\r\n");
         if ($written === false) {
             return null;
         }
@@ -218,7 +218,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
     {
         $length = dechex(2 + strlen($data));
 
-        return "\r\n${length}\r\n\177${compat}${data}\r\n";
+        return "\r\n{$length}\r\n\177{$compat}{$data}\r\n";
     }
 
     protected function getHttpHeadersPayload(): string
@@ -353,7 +353,7 @@ class SimpleHttpTunnelHandler extends SimpleHttpHandler
         $len2 = chr($len & 0xFF);
         if ($this->isRedirect) {
             $this->protocol->setSocketHandler(new SocketHandler($this->protocol, $this->getChannel($channelName)));
-            $this->protocol->write("\177${len0}${len1}${len2}${context}");
+            $this->protocol->write("\177{$len0}{$len1}{$len2}{$context}");
             $this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
             $this->close();
             $this->protocol->handler = $this->protocol->getSocketHandler();
